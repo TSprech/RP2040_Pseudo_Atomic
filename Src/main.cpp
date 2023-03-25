@@ -10,12 +10,32 @@ critical_section_t critical;
 
 class PsuedoAtomic {
  public:
+  class PAReader {
+   public:
+    PAReader(const int& var) : underlying(var) {
+      printf("Acquiring Spinlock\n");
+      critical_section_enter_blocking(&critical);
+    }
+
+    auto Get() const -> const int& {
+      return underlying;
+    }
+
+    ~PAReader() {
+      printf("Releasing Spinlock\n");
+      critical_section_exit(&critical);
+    }
+
+   private:
+    const int& underlying;
+  };
+
   auto Writer() -> int& {
     return (state) ? a : b;
   }
 
-  auto Reader() const -> const int& {
-    return (state) ? b : a;
+  auto Reader() const -> const PAReader {
+    return (state) ? PAReader{b} : PAReader{a};
   }
 
   auto Swap() -> void {
@@ -54,10 +74,10 @@ int main() {
   multicore_launch_core1(main1);
 
   do {
-    critical_section_enter_blocking(&critical);
-    auto psr = ps.Reader();
-    critical_section_exit(&critical);
-    printf("PS: %i\n", psr);
+    {
+      auto psr = ps.Reader();
+      printf("PS: %i\n", psr.Get());
+    }
     sleep_ms(200);
   } while (true);
 }
