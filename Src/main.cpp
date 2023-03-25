@@ -6,7 +6,7 @@
 #include "pico/sync.h"
 
 template <typename T>
-class PsuedoAtomic {
+class PseudoAtomic {
   class PAReader;
 
  public:
@@ -55,7 +55,7 @@ class PsuedoAtomic {
   };
 };
 
-PsuedoAtomic<int> ps{};
+PseudoAtomic<int> ps{};
 
 void main1() {
   do {
