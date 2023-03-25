@@ -7,15 +7,35 @@
 #include <cstdio>
 
 critical_section_t critical;
-volatile int a;
-volatile int b;
+
+class PsuedoAtomic {
+ public:
+  auto Writer() -> int& {
+    return (state) ? a : b;
+  }
+
+  auto Reader() const -> const int& {
+    return (state) ? b : a;
+  }
+
+  auto Swap() -> void {
+    critical_section_enter_blocking(&critical);
+    state = !state;
+    critical_section_exit(&critical);
+  }
+ private:
+  bool state = false;
+  int a = 0;
+  int b = 0;
+};
+
+PsuedoAtomic ps{};
 
 void main1() {
   do {
-    critical_section_enter_blocking(&critical);
-    a = a + 1;
-    b = b + 1;
-    critical_section_exit(&critical);
+    auto& psw = ps.Writer();
+    psw = psw + 1;
+    ps.Swap();
   } while (true);
 }
 
@@ -35,9 +55,9 @@ int main() {
 
   do {
     critical_section_enter_blocking(&critical);
-    if (a != b) {
-      gpio_put(PICO_DEFAULT_LED_PIN, true);
-    }
+    auto psr = ps.Reader();
     critical_section_exit(&critical);
+    printf("PS: %i\n", psr);
+    sleep_ms(200);
   } while (true);
 }
