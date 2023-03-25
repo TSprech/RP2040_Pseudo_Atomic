@@ -15,6 +15,7 @@ void main1() {
     critical_section_enter_blocking(&critical);
     a = a + 1;
     b = b + 1;
+    critical_section_exit(&critical);
   } while (true);
 }
 
@@ -37,5 +38,6 @@ int main() {
     if (a != b) {
       gpio_put(PICO_DEFAULT_LED_PIN, true);
     }
+    critical_section_exit(&critical);
   } while (true);
 }
