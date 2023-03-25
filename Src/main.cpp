@@ -1,55 +1,61 @@
-#include "hardware/gpio.h"
+#include <cstdio>
 
+#include "hardware/gpio.h"
 #include "pico/multicore.h"
 #include "pico/stdio.h"
 #include "pico/sync.h"
 
-#include <cstdio>
-
-critical_section_t critical;
-
+template <typename T>
 class PsuedoAtomic {
+  class PAReader;
+
  public:
-  class PAReader {
-   public:
-    PAReader(const int& var) : underlying(var) {
-      printf("Acquiring Spinlock\n");
-      critical_section_enter_blocking(&critical);
-    }
+  auto Initialize() -> void {
+    critical_section_init(&ct_);
+  }
 
-    auto Get() const -> const int& {
-      return underlying;
-    }
-
-    ~PAReader() {
-      printf("Releasing Spinlock\n");
-      critical_section_exit(&critical);
-    }
-
-   private:
-    const int& underlying;
-  };
-
-  auto Writer() -> int& {
+  auto Writer() -> T& {
     return (state) ? a : b;
   }
 
-  auto Reader() const -> const PAReader {
-    return (state) ? PAReader{b} : PAReader{a};
+  auto Reader() -> const PAReader {
+    return (state) ? PAReader{b, ct_} : PAReader{a, ct_};
   }
 
   auto Swap() -> void {
-    critical_section_enter_blocking(&critical);
+    critical_section_enter_blocking(&ct_);
     state = !state;
-    critical_section_exit(&critical);
+    critical_section_exit(&ct_);
   }
+
  private:
+  critical_section_t ct_{};
   bool state = false;
-  int a = 0;
-  int b = 0;
+  T a = 0;
+  T b = 0;
+
+  class PAReader {
+   public:
+    PAReader(const T& var, critical_section_t& ct)
+        : ct_(ct), underlying_(var) {
+      critical_section_enter_blocking(&ct_);
+    }
+
+    auto Get() const -> const T& {
+      return underlying_;
+    }
+
+    ~PAReader() {
+      critical_section_exit(&ct_);
+    }
+
+   private:
+    critical_section_t& ct_;
+    const T& underlying_;
+  };
 };
 
-PsuedoAtomic ps{};
+PsuedoAtomic<int> ps{};
 
 void main1() {
   do {
@@ -68,7 +74,7 @@ int main() {
   gpio_put(PICO_DEFAULT_LED_PIN, false);
   sleep_ms(250);
 
-  critical_section_init(&critical);
+  ps.Initialize();
 
   stdio_init_all();
   multicore_launch_core1(main1);
