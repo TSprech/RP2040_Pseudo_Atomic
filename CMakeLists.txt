@@ -43,6 +43,9 @@ if (TARGET tinyusb_device)
     # create map/bin/hex file etc.
     pico_add_extra_outputs(RP2040_Pseudo_Atomic)
 
+    add_subdirectory(Inc/FMT)
+    target_link_libraries(RP2040_Pseudo_Atomic fmt)
+
     target_include_directories(RP2040_Pseudo_Atomic PUBLIC Inc)
     add_link_options(--print-memory-usage)
 elseif (PICO_ON_DEVICE)
