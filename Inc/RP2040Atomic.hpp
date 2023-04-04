@@ -9,10 +9,14 @@
 #include <concepts>
 #include "pico/sync.h"
 
+#include "FMT/FMTToUART.hpp"
+#include "pico/time.h"
+
 namespace patom {
   namespace internal {
-    template <typename T> // Same requirements as std::atomic
-    concept atomic_t = std::is_trivially_copyable_v<T> && std::is_copy_constructible_v<T> && std::is_move_constructible_v<T> && std::is_copy_assignable_v<T> && std::is_move_assignable_v<T>;
+    template<typename T> // Same requirements as std::atomic
+    concept atomic_t = std::is_trivially_copyable_v<T> && std::is_copy_constructible_v<T> &&
+                       std::is_move_constructible_v<T> && std::is_copy_assignable_v<T> && std::is_move_assignable_v<T>;
 
     /* Note a single critical section is used as pseudo atomic was designed to have atomic access between cores.
      * Using within an RTOS (or other threaded environment) has not been considered, nor how a shared spinlock across all atomic would affect that. */
@@ -24,15 +28,15 @@ namespace patom {
    * @tparam T The type of the atomic variable, must satisfy atomic_t requirements.
    * @todo Check for C++ version and only use concepts if C++20 or greater is used.
    */
-  template <internal::atomic_t T>
+  template<internal::atomic_t T>
   class PseudoAtomic {
-   public:
+  public:
     /**
      * @brief Assignment operator which atomically updates the atomic's value.
      * @param t The new value for the atomic variable.
      * @returns A reference to this.
      */
-    auto operator=(T t) -> PseudoAtomic<T>& {
+    auto operator=(T t) -> PseudoAtomic<T> & {
       critical_section_enter_blocking(&ct_); // Lock from reading
       t_ = t; // Assign
       critical_section_exit(&ct_); // Unlock for reading or writing
@@ -57,9 +61,9 @@ namespace patom {
     PseudoAtomic<T>& operator=(const PseudoAtomic<T>&) = delete;  // Remove copy assignment
     PseudoAtomic<T>& operator=(PseudoAtomic<T>&&) = delete;       // Remove move assignment
 
-   private:
-    inline static critical_section_t ct_ = internal::ct;  // Critical section used for protecting reading and swapping
-    T t_; // Internal value of the atomic
+//   private:
+    inline static critical_section_t& ct_ = internal::ct;  // Critical section used for protecting reading and swapping
+    volatile T t_; // Internal value of the atomic
   };
 
   /**
