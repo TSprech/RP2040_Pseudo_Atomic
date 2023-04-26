@@ -1,12 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 include(ARMGCCToolchain.cmake)
 
-set(PICO_BOARD adafruit_feather_rp2040)
-remove_definitions(-DPICO_BOARD="pico")
-add_definitions(-DPICO_BOARD="adafruit_feather_rp2040")
-
 include(pico-sdk/pico_sdk_init.cmake)
-include(pico-sdk/src/boards/generic_board.cmake)
 
 project(RP2040_Pseudo_Atomic C CXX ASM)
 set(CMAKE_C_STANDARD 23)
@@ -42,9 +37,6 @@ if (TARGET tinyusb_device)
 
     # create map/bin/hex file etc.
     pico_add_extra_outputs(RP2040_Pseudo_Atomic)
-
-    add_subdirectory(Inc/FMT)
-    target_link_libraries(RP2040_Pseudo_Atomic fmt)
 
     target_include_directories(RP2040_Pseudo_Atomic PUBLIC Inc)
     add_link_options(--print-memory-usage)
