@@ -1,6 +1,10 @@
-//
-// TSprech at 2023/03/27 11:47:36.
-//
+/**
+ * @copyright 2023
+ * @author TSprech
+ * @date 2023/03/27 11:47:36
+ * @brief Library which emulates the STL atomic variables using Pico hardware synchronization.
+ * @license Apache 2.0
+ */
 
 #ifndef RP2040ATOMIC_HPP
 #define RP2040ATOMIC_HPP
@@ -33,7 +37,7 @@ namespace patom {
      * @param t The new value for the atomic variable.
      * @returns A reference to this.
      */
-    auto operator=(T t) -> PseudoAtomic<T> & {
+    auto operator=(T t) -> PseudoAtomic<T>& {
       critical_section_enter_blocking(&ct_); // Lock from reading
       t_ = t; // Assign
       critical_section_exit(&ct_); // Unlock for reading or writing
@@ -58,7 +62,7 @@ namespace patom {
     PseudoAtomic<T>& operator=(const PseudoAtomic<T>&) = delete;  // Remove copy assignment
     PseudoAtomic<T>& operator=(PseudoAtomic<T>&&) = delete;       // Remove move assignment
 
-//   private:
+   private:
     inline static critical_section_t& ct_ = internal::ct;  /**< Critical section used for protecting reading and swapping */
     volatile T t_; /**< Internal value of the atomic */
   };
