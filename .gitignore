@@ -4,4 +4,3 @@ cmake-build-release/*
 cmake-build-relwithdebinfo/*
 .idea
 pico-sdk
-Inc/FMT/fmt

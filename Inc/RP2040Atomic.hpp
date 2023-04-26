@@ -9,8 +9,6 @@
 #include <concepts>
 #include "pico/sync.h"
 
-#include "pico/time.h"
-
 namespace patom {
   namespace internal {
     template<typename T> // Same requirements as std::atomic
@@ -61,8 +59,8 @@ namespace patom {
     PseudoAtomic<T>& operator=(PseudoAtomic<T>&&) = delete;       // Remove move assignment
 
 //   private:
-    inline static critical_section_t& ct_ = internal::ct;  // Critical section used for protecting reading and swapping
-    volatile T t_; // Internal value of the atomic
+    inline static critical_section_t& ct_ = internal::ct;  /**< Critical section used for protecting reading and swapping */
+    volatile T t_; /**< Internal value of the atomic */
   };
 
   /**
